@@ -974,9 +974,6 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
     return false;
   }
 
-  // set the correct thread state
-  osthread->set_thread_type(thr_type);
-
   // Initial state is ALLOCATED but not INITIALIZED
   osthread->set_state(ALLOCATED);
 
@@ -5051,16 +5048,6 @@ int os::open(const char *path, int oflag, int mode) {
 #endif
 
   return fd;
-}
-
-// return current position of file pointer
-jlong os::current_file_offset(int fd) {
-  return (jlong)::lseek(fd, (off_t)0, SEEK_CUR);
-}
-
-// move file pointer to the specified offset
-jlong os::seek_to_file_offset(int fd, jlong offset) {
-  return (jlong)::lseek(fd, (off_t)offset, SEEK_SET);
 }
 
 static jlong slow_thread_cpu_time(Thread *thread, bool user_sys_cpu_time);

@@ -23,11 +23,10 @@
 #include "export.h"
 #include <stdbool.h>
 #if defined(__linux__)
-#include <linux/fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
-#include <bits/types.h>
 #include <dlfcn.h>
 #ifndef STATX_BASIC_STATS
 #define STATX_BASIC_STATS 0x000007ffU
@@ -38,14 +37,27 @@
 #ifndef RTLD_DEFAULT
 #define RTLD_DEFAULT RTLD_LOCAL
 #endif
+#ifndef AT_SYMLINK_NOFOLLOW
+#define AT_SYMLINK_NOFOLLOW 0x100
+#endif
+#ifndef AT_FDCWD
+#define AT_FDCWD -100
+#endif
+
+#ifndef __GLIBC__
+// Alpine doesn't know these types, define them
+typedef unsigned int       __uint32_t;
+typedef unsigned short     __uint16_t;
+typedef unsigned long int  __uint64_t;
+#endif
 
 /*
  * Timestamp structure for the timestamps in struct statx.
  */
 struct my_statx_timestamp {
-        __int64_t   tv_sec;
+        int64_t   tv_sec;
         __uint32_t  tv_nsec;
-        __int32_t   __reserved;
+        int32_t   __reserved;
 };
 
 /*
