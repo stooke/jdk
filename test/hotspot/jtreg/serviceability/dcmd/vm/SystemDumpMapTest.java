@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 /*
  * @test
- * @summary Test of diagnostic command System.map
+ * @summary Test of diagnostic command System.dump_map
  * @library /test/lib
  * @requires (os.family == "linux" | os.family == "windows" | os.family == "mac")
  * @modules java.base/jdk.internal.misc
@@ -41,6 +41,18 @@ import java.util.regex.Pattern;
  *          java.management
  *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @run testng/othervm -XX:+UsePerfData SystemDumpMapTest
+ */
+
+ /*
+ * @test
+ * @summary Test of diagnostic command System.dump_map using ZGC
+ * @library /test/lib
+ * @requires (os.family == "linux" | os.family == "windows" | os.family == "mac")
+ * @modules java.base/jdk.internal.misc
+ *          java.compiler
+ *          java.management
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
+ * @run testng/othervm -XX:+UsePerfData -XX:+UseZGC SystemDumpMapTest
  */
 public class SystemDumpMapTest extends SystemMapTestBase {
 

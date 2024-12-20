@@ -157,7 +157,7 @@ public class SystemMapTestBase {
 
         static final String macow = "cow";
         static final String macprivate = "pvt";
-        static final String macprivate_or_shared = "(pvt|tsh)";
+        static final String macshared = "pvt";
         static final String macprivatealiased = "p/a";
 
         static final String macOSbase = range + space + someSize + space + macprot + space;
@@ -173,7 +173,7 @@ public class SystemMapTestBase {
 
         static final String shouldMatchIfNMTIsEnabled_macOS[] = {
             // heap is private with G1GC, shared with ZGC
-            macOSbase + macprivate_or_shared + space + someNumber + space + "JAVAHEAP.*",
+            macOSbase + macprivate + space + someNumber + space + "JAVAHEAP.*",
             // metaspace
             macOSbase + macprivate + space + someNumber + space + "META.*",
             // code cache
