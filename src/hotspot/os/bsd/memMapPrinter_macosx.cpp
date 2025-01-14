@@ -53,6 +53,102 @@ static const int MAX_REGIONS_RETURNED = 1000000;
 // first section is size 128MB.  vmmap(1) has the same issue.
 static const int MACOS_PARTIAL_ALLOCATION_SIZE = 128 * M;
 
+class DllEntry {
+  public:
+
+  const char* _address;
+  const char* _dll_name;
+  DllEntry* _next;
+
+  void free() {
+    if (_next != nullptr) {
+      _next->free();
+      os::free(_next);
+      _next = nullptr;
+    }
+    os::free((void*)_dll_name);
+    _dll_name = nullptr;
+  }
+
+  static DllEntry* build(const char* addr, const char* dll_name) {
+    DllEntry* e = (DllEntry*)os::malloc(sizeof(DllEntry), mtStatistics);
+    assert(e != nullptr, "malloc failure");
+    assert(dll_name != nullptr, "null dll name");
+    e->_address = addr;
+    e->_dll_name = os::strdup(dll_name);
+    e->_next = nullptr;
+    return e;
+  }
+
+  /* append to list in sorted order, return first element of list */
+  DllEntry* append(DllEntry* entry) {
+    DllEntry* first = this;
+    if (entry->_address < _address) {
+      entry->_next = this;
+      first = entry;
+    } else if (_next == nullptr) {
+      _next = entry;
+    } else {
+      _next = _next->append(entry);
+    }
+    return first;
+  }
+};
+
+class DllList {
+  DllEntry* _dll_list;
+  DllEntry* _dll_cursor;
+
+  public:
+
+  DllList() : _dll_list(nullptr), _dll_cursor(nullptr) {}
+  ~DllList() {
+    /* free any held resources */
+    if (_dll_list != nullptr) {
+      _dll_list->free();
+      os::free(_dll_list);
+    }
+  }
+
+  DllEntry* cursor_rewind() {
+    _dll_cursor = _dll_list;
+    return _dll_cursor;
+  }
+
+  DllEntry* cursor_current() {
+    return _dll_cursor;
+  }
+
+  DllEntry* cursor_next() {
+    if (_dll_cursor != nullptr) {
+      _dll_cursor = _dll_cursor->_next;
+    }
+    return _dll_cursor;
+  }
+
+  void append(DllEntry* entry) {
+    if (_dll_list == nullptr) {
+      _dll_list = entry;
+    } else {
+      _dll_list = _dll_list->append(entry);
+    }
+  }
+
+  static int dll_cb(const char *dll_name, address low, address high, void* param) {
+    DllList* list = (DllList*)(param);
+    DllEntry* entry = DllEntry::build((const char*)low, dll_name);
+    list->append(entry);
+    return 0;
+  };
+
+  void add_all_dlls() {
+    os::get_loaded_modules_info(dll_cb, this);
+    cursor_rewind();
+  }
+};
+
+DllList dll_list;
+
 class MappingInfo {
   proc_regioninfo _rinfo;
 public:
@@ -285,6 +381,31 @@ public:
     st->print_raw(mapping_info._file_name.base());
     st->cr();
 
+  /*
+   * regarding the 'cursor':
+   * The dll_list is sorted by ascending start address,
+   * and the macOS region_info is also returned in ascending start address.
+   * When printing out a region_info, we skip ahead in the dll_list until we find
+   * dlls within the region, and print them out.  
+   * Then we leave the cursor pointing to the first dll above the current region.
+   * We do not print out any dll info for regions with an associated file_name,
+   * as that would be redundant.
+   */
+    if (mapping_info._file_name.count() == 0) {
+      for (; dll_list.cursor_current() != nullptr; dll_list.cursor_next()) {
+        DllEntry* e = dll_list.cursor_current();
+        if ((uint64_t)(e->_address) < region_info.pri_address) {
+          continue;
+        }
+        if ((uint64_t)(e->_address) >= (region_info.pri_address + region_info.pri_size)) {
+          break;
+        }
+        INDENT_BY(5);
+        st->print("%#014.12llx", (uint64_t)(e->_address));
+        INDENT_BY(73);
+        st->print_cr("%s", e->_dll_name);
+      }
+    }
 #undef INDENT_BY
   }
 
@@ -339,6 +460,8 @@ void MemMapPrinter::pd_print_all_mappings(const MappingPrintSession& session) {
   printer.print_legend();
   st->cr();
   printer.print_header();
+
+  dll_list.add_all_dlls();
 
   proc_regionwithpathinfo region_info_with_path;
   MappingInfo mapping_info;
