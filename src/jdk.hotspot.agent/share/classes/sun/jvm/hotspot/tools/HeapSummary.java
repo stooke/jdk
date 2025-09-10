@@ -27,6 +27,7 @@ package sun.jvm.hotspot.tools;
 import java.io.*;
 import java.util.*;
 import sun.jvm.hotspot.gc.epsilon.*;
+import sun.jvm.hotspot.gc.jstgc.*;
 import sun.jvm.hotspot.gc.g1.*;
 import sun.jvm.hotspot.gc.parallel.*;
 import sun.jvm.hotspot.gc.serial.*;
@@ -141,6 +142,9 @@ public class HeapSummary extends Tool {
          printValMB("capacity  = ", num_regions * ShenandoahHeapRegion.regionSizeBytes());
          printValMB("used      = ", sh.used());
          printValMB("committed = ", sh.committed());
+      } else if (heap instanceof JstgcHeap) {
+         JstgcHeap eh = (JstgcHeap) heap;
+         printSpace(eh.space());
       } else if (heap instanceof EpsilonHeap) {
          EpsilonHeap eh = (EpsilonHeap) heap;
          printSpace(eh.space());

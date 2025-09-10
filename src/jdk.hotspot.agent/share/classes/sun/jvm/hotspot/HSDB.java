@@ -34,6 +34,7 @@ import sun.jvm.hotspot.code.*;
 import sun.jvm.hotspot.compiler.*;
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.gc.epsilon.*;
+import sun.jvm.hotspot.gc.jstgc.*;
 import sun.jvm.hotspot.gc.parallel.*;
 import sun.jvm.hotspot.gc.serial.*;
 import sun.jvm.hotspot.gc.shared.*;
@@ -1116,6 +1117,9 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                             anno = "PSOldGen ";
                             bad = false;
                           }
+                        } else if (collHeap instanceof JstgcHeap) {
+                          anno = "Jstgc ";
+                          bad = false;
                         } else if (collHeap instanceof EpsilonHeap) {
                           anno = "Epsilon ";
                           bad = false;

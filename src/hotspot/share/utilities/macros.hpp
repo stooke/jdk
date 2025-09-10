@@ -161,6 +161,25 @@
 #define NOT_EPSILONGC_RETURN_(code) { return code; }
 #endif // INCLUDE_EPSILONGC
 
+
+#ifndef INCLUDE_JSTGC
+#define INCLUDE_JSTGC 1
+#endif // INCLUDE_JSTGC
+
+#if INCLUDE_JSTGC
+#define JSTGC_ONLY(x) x
+#define JSTGC_ONLY_ARG(arg) arg,
+#define NOT_JSTGC(x)
+#define NOT_JSTGC_RETURN        /* next token must be ; */
+#define NOT_JSTGC_RETURN_(code) /* next token must be ; */
+#else
+#define JSTGC_ONLY(x)
+#define JSTGC_ONLY_ARG(arg)
+#define NOT_JSTGC(x) x
+#define NOT_JSTGC_RETURN        {}
+#define NOT_JSTGC_RETURN_(code) { return code; }
+#endif // INCLUDE_JSTGC
+
 #ifndef INCLUDE_G1GC
 #define INCLUDE_G1GC 1
 #endif // INCLUDE_G1GC

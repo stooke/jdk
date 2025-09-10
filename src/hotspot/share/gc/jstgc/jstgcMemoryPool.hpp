@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,24 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#ifndef SHARE_GC_JSTGC_JSTGCMEMORYPOOL_HPP
+#define SHARE_GC_JSTGC_JSTGCMEMORYPOOL_HPP
 
+#include "gc/epsilon/epsilonHeap.hpp"
+#include "services/memoryPool.hpp"
+#include "services/memoryUsage.hpp"
 #include "utilities/macros.hpp"
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  JSTGC_ONLY(f(JstgcBarrierSet))                     \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(ZBarrierSet))
+class JstgcMemoryPool : public CollectedMemoryPool {
+private:
+  JstgcHeap* _heap;
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
+public:
+  JstgcMemoryPool(JstgcHeap* heap);
+  size_t committed_in_bytes() { return _heap->capacity();     }
+  size_t used_in_bytes()      { return _heap->used();         }
+  size_t max_size()     const { return _heap->max_capacity(); }
+  MemoryUsage get_memory_usage();
+};
 
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
-
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#endif // SHARE_GC_JSTGC_JSTGCMEMORYPOOL_HPP

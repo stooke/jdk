@@ -192,6 +192,7 @@ protected:
     Parallel,
     G1,
     Epsilon,
+    Jstgc,
     Z,
     Shenandoah
   };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,36 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#ifndef SHARE_GC_JSTGC_JSTGCBARRIERSET_HPP
+#define SHARE_GC_JSTGC_JSTGCBARRIERSET_HPP
 
-#include "utilities/macros.hpp"
+#include "gc/shared/barrierSet.hpp"
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  JSTGC_ONLY(f(JstgcBarrierSet))                     \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(ZBarrierSet))
+// No interaction with application is required for Epsilon, and therefore
+// the barrier set is empty.
+class JstgcBarrierSet: public BarrierSet {
+  friend class VMStructs;
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
+public:
+  JstgcBarrierSet();
 
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
+  virtual void print_on(outputStream *st) const {}
 
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+  virtual void on_thread_create(Thread* thread);
+  virtual void on_thread_destroy(Thread* thread);
+
+  template <DecoratorSet decorators, typename BarrierSetT = JstgcBarrierSet>
+  class AccessBarrier: public BarrierSet::AccessBarrier<decorators, BarrierSetT> {};
+};
+
+template<>
+struct BarrierSet::GetName<JstgcBarrierSet> {
+  static const BarrierSet::Name value = BarrierSet::JstgcBarrierSet;
+};
+
+template<>
+struct BarrierSet::GetType<BarrierSet::JstgcBarrierSet> {
+  typedef ::JstgcBarrierSet type;
+};
+
+#endif // SHARE_GC_JSTGC_JSTGCBARRIERSET_HPP

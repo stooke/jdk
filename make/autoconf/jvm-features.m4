@@ -44,7 +44,7 @@
 m4_define(jvm_features_valid, m4_normalize( \
     ifdef([custom_jvm_features_valid], custom_jvm_features_valid) \
     \
-    cds compiler1 compiler2 dtrace epsilongc g1gc jfr jni-check \
+    cds compiler1 compiler2 dtrace epsilongc jstgc g1gc jfr jni-check \
     jvmci jvmti link-time-opt management minimal opt-size parallelgc \
     serialgc services shenandoahgc vm-structs zero zgc \
 ))
@@ -410,7 +410,7 @@ AC_DEFUN([JVM_FEATURES_PREPARE_VARIANT],
   if test "x$variant" = "xclient"; then
     JVM_FEATURES_VARIANT_FILTER="compiler2 jvmci link-time-opt opt-size"
   elif test "x$variant" = "xminimal"; then
-    JVM_FEATURES_VARIANT_FILTER="cds compiler2 dtrace epsilongc g1gc \
+    JVM_FEATURES_VARIANT_FILTER="cds compiler2 dtrace epsilongc jstgc g1gc \
         jfr jni-check jvmci jvmti management parallelgc services \
         shenandoahgc vm-structs zgc"
     if test "x$OPENJDK_TARGET_CPU" = xarm ; then

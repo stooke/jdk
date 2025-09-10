@@ -31,6 +31,7 @@ import sun.jvm.hotspot.utilities.Observer;
 import sun.jvm.hotspot.debugger.Address;
 import sun.jvm.hotspot.debugger.OopHandle;
 import sun.jvm.hotspot.gc.epsilon.EpsilonHeap;
+import sun.jvm.hotspot.gc.jstgc.JstgcHeap;
 import sun.jvm.hotspot.gc.g1.G1CollectedHeap;
 import sun.jvm.hotspot.gc.parallel.ParallelScavengeHeap;
 import sun.jvm.hotspot.gc.serial.SerialHeap;
@@ -87,6 +88,7 @@ public class Universe {
     addHeapTypeIfInDB(db, ParallelScavengeHeap.class);
     addHeapTypeIfInDB(db, G1CollectedHeap.class);
     addHeapTypeIfInDB(db, EpsilonHeap.class);
+    addHeapTypeIfInDB(db, JstgcHeap.class);
     addHeapTypeIfInDB(db, ZCollectedHeap.class);
     addHeapTypeIfInDB(db, ShenandoahHeap.class);
     addHeapTypeIfInDB(db, ShenandoahGenerationalHeap.class);
