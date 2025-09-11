@@ -66,6 +66,7 @@ requires.properties= \
     vm.gc.Parallel \
     vm.gc.Shenandoah \
     vm.gc.Epsilon \
+    vm.gc.Jstgc \
     vm.gc.Z \
     vm.jvmci \
     vm.jvmci.enabled \

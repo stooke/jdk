@@ -25,23 +25,11 @@
 #ifndef SHARE_GC_JSTGC_JSTGCBARRIERSET_HPP
 #define SHARE_GC_JSTGC_JSTGCBARRIERSET_HPP
 
-#include "gc/shared/barrierSet.hpp"
+#include "gc/epsilon/epsilonBarrierSet.hpp"
 
-// No interaction with application is required for Epsilon, and therefore
-// the barrier set is empty.
-class JstgcBarrierSet: public BarrierSet {
-  friend class VMStructs;
 
-public:
-  JstgcBarrierSet();
+class JstgcBarrierSet: public EpsilonBarrierSet {
 
-  virtual void print_on(outputStream *st) const {}
-
-  virtual void on_thread_create(Thread* thread);
-  virtual void on_thread_destroy(Thread* thread);
-
-  template <DecoratorSet decorators, typename BarrierSetT = JstgcBarrierSet>
-  class AccessBarrier: public BarrierSet::AccessBarrier<decorators, BarrierSetT> {};
 };
 
 template<>

@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2023, 2025, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,7 +19,38 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "gc/jstgc/jstgcBarrierSet.hpp"
+package gc.jstgc;
+
+/**
+ * @test TestJstgcEnabled
+ * @requires vm.gc.Jstgc
+ * @summary Basic sanity test for Jstgc
+ * @library /test/lib
+ *
+ * @run main/othervm -Xmx256m
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+UseJstgcGC
+ *                   gc.jstgc.TestJstgcEnabled
+ */
+
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+
+public class TestJstgcEnabled {
+  public static void main(String[] args) throws Exception {
+    if (!isJstgcEnabled()) {
+      throw new IllegalStateException("Debug builds should have Jstgc enabled");
+    }
+  }
+
+  public static boolean isJstgcEnabled() {
+    for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+      System.out.printf("bean name '%s'\n", bean.getName());
+      if (bean.getName().contains("Jstgc")) {
+        return true;
+      }
+    }
+    return false;
+  }
+}

@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2023, 2025, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,7 +19,33 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "gc/jstgc/jstgcBarrierSet.hpp"
+package gc.jstgc;
+
+/**
+ * @test TestPrintSteps
+ * @requires vm.gc.Jstgc
+ * @summary Tests -XX:JstgcPrintHeapSteps works
+ *
+ * @run main/othervm -Xmx64m -Xlog:gc
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+UseJstgcGC
+ *                   -XX:JstgcPrintHeapSteps=0
+ *                   gc.jstgc.TestPrintHeapSteps
+ *
+ * @run main/othervm -Xmx64m -Xlog:gc
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+UseJstgcGC
+ *                   -XX:JstgcPrintHeapSteps=1
+ *                   gc.jstgc.TestPrintHeapSteps
+ *
+ * @run main/othervm -Xmx64m -Xlog:gc
+ *                   -XX:+UnlockExperimentalVMOptions -XX:+UseJstgcGC
+ *                   -XX:JstgcPrintHeapSteps=1000
+ *                   gc.jstgc.TestPrintHeapSteps
+ */
+
+public class TestPrintHeapSteps {
+  public static void main(String[] args) throws Exception {
+    System.out.println("Hello World");
+  }
+}
