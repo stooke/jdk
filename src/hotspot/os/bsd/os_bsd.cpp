@@ -1928,6 +1928,11 @@ size_t os::vm_min_address() {
 #endif
 }
 
+size_t os:vm_max_address() {
+  /* TO BE DONE */
+  return _physical_memory;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // thread priority support
 

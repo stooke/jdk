@@ -449,6 +449,9 @@ class os: AllStatic {
   // Returns the lowest address the process is allowed to map against.
   static size_t vm_min_address();
 
+  // Returns the highest address the process is allowed to map aganst.
+  static size_t vm_max_address();
+
   // Returns an upper limit beyond which reserve_memory() calls are guaranteed
   // to fail. It is not guaranteed that reserving less memory than this will
   // succeed, however.

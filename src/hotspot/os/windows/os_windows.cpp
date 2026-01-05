@@ -3371,6 +3371,11 @@ size_t os::vm_min_address() {
   return _vm_min_address_default;
 }
 
+size_t os:vm_max_address() {
+  /* TO BE DONE */
+  return -1;
+}
+
 char* os::pd_attempt_map_memory_to_file_at(char* requested_addr, size_t bytes, int file_desc) {
   assert(file_desc >= 0, "file_desc is not valid");
   return map_memory_to_file(requested_addr, bytes, file_desc);

@@ -1995,6 +1995,11 @@ size_t os::vm_min_address() {
   return _vm_min_address_default;
 }
 
+size_t os:vm_max_address() {
+  /* TO BE DONE */
+  return -1
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // thread priority support
 

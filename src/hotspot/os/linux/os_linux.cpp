@@ -4215,6 +4215,10 @@ size_t os::vm_min_address() {
   return value;
 }
 
+size_t os:vm_max_address() {
+  return reserve_memory_limit();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // thread priority support
 
