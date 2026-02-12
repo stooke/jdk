@@ -451,6 +451,7 @@ class os: AllStatic {
 
   // Returns the highest address the process is allowed to map aganst.
   static size_t vm_max_address();
+  static size_t vm_max_address_bit();
 
   // Returns an upper limit beyond which reserve_memory() calls are guaranteed
   // to fail. It is not guaranteed that reserving less memory than this will

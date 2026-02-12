@@ -41,7 +41,7 @@ static const size_t DEFAULT_MAX_ADDRESS_BIT = 46;
 // Minimum value returned, if probing fail
 static const size_t MINIMUM_MAX_ADDRESS_BIT = 36;
 
-static size_t probe_valid_max_address_bit() {
+size_t os::vm_max_address_bit() {
 #ifdef LINUX
   size_t max_address_bit = 0;
   const size_t page_size = os::vm_page_size();

@@ -4271,8 +4271,12 @@ static size_t probe_valid_max_address_bit() {
   return MAX2(max_address_bit, MINIMUM_MAX_ADDRESS_BIT);
 }
 
+size_t os::vm_max_address_bit() {
+  return probe_valid_max_address_bit();
+}
+
 size_t os::vm_max_address() {
-  size_t mbit = probe_valid_max_address_bit();
+  size_t mbit = vm_max_address_bit();
   size_t rml = reserve_memory_limit();
   //log_info(os, map)("vm_max_address: mbit=%ld rml=%ld", mbit, rml);
   return reserve_memory_limit();
