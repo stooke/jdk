@@ -4219,17 +4219,10 @@ size_t os::vm_min_address() {
 
 #include <sys/mman.h>
 
-// Default value if probing is not implemented for a certain platform
-// Max address bit is restricted by implicit assumptions in the code, for instance
-// the bit layout of ZForwardingEntry or Partial array entry (see ZMarkStackEntry) in mark stack
-static const size_t DEFAULT_MAX_ADDRESS_BIT = 55;
-// Minimum value returned, if probing fail
-static const size_t MINIMUM_MAX_ADDRESS_BIT = 36;
-
-static size_t probe_valid_max_address_bit() {
+size_t os::vm_max_address_bit(size_t max_addr_bit, size_t min_addr_bit) {
   size_t max_address_bit = 0;
   const size_t page_size = os::vm_page_size();
-  for (size_t i = DEFAULT_MAX_ADDRESS_BIT; i > MINIMUM_MAX_ADDRESS_BIT; --i) {
+  for (size_t i = max_addr_bit; i > min_addr_bit; --i) {
     const uintptr_t base_addr = ((uintptr_t) 1U) << i;
     if (msync((void*)base_addr, page_size, MS_ASYNC) == 0) {
       // msync suceeded, the address is valid, and maybe even already mapped.
@@ -4260,7 +4253,7 @@ static size_t probe_valid_max_address_bit() {
   }
   if (max_address_bit == 0) {
     // probing failed, allocate a very high page and take that bit as the maximum
-    const uintptr_t high_addr = ((uintptr_t) 1U) << DEFAULT_MAX_ADDRESS_BIT;
+    const uintptr_t high_addr = ((uintptr_t) 1U) << max_addr_bit;
     void* const result_addr = mmap((void*) high_addr, page_size, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0);
     if (result_addr != MAP_FAILED) {
       max_address_bit = BitsPerSize_t - count_leading_zeros((size_t) result_addr) - 1;
@@ -4268,15 +4261,18 @@ static size_t probe_valid_max_address_bit() {
     }
   }
   log_info(os, map)("Probing address space for the highest valid bit: %zu", max_address_bit);
-  return MAX2(max_address_bit, MINIMUM_MAX_ADDRESS_BIT);
+  return MAX2(max_address_bit, min_addr_bit);
 }
 
-size_t os::vm_max_address_bit() {
-  return probe_valid_max_address_bit();
-}
+// Default value if probing is not implemented for a certain platform
+// Max address bit is restricted by implicit assumptions in the code, for instance
+// the bit layout of ZForwardingEntry or Partial array entry (see ZMarkStackEntry) in mark stack
+static const size_t DEFAULT_MAX_ADDRESS_BIT = 55;
+// Minimum value returned, if probing fail
+static const size_t MINIMUM_MAX_ADDRESS_BIT = 36;
 
 size_t os::vm_max_address() {
-  size_t mbit = vm_max_address_bit();
+  size_t mbit = vm_max_address_bit(DEFAULT_MAX_ADDRESS_BIT, MINIMUM_MAX_ADDRESS_BIT);
   size_t rml = reserve_memory_limit();
   //log_info(os, map)("vm_max_address: mbit=%ld rml=%ld", mbit, rml);
   return reserve_memory_limit();
