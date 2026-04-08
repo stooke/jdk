@@ -124,6 +124,9 @@ TEST_VM(os, page_size_for_region_unaligned) {
   }
 }
 
+// The test doesn't work for PRODUCT because it needs WizardMode
+#ifndef PRODUCT
+
 static void assert_test_pattern(oop& obj, const char* pattern) {
   stringStream st;
   os::print_location(&st, p2i(obj), true);
@@ -171,8 +174,8 @@ TEST_VM(os, test_print_location) {
     assert_test_pattern(obj, "is an oop");
     os::print_location(ostream, p2i(obj), true);
   }
-
 }
+#endif
 
 TEST(os, test_random) {
   const double m = 2147483647;
