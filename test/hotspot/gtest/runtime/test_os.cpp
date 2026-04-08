@@ -29,6 +29,7 @@
 #include "runtime/thread.hpp"
 #include "runtime/threads.hpp"
 #include "testutils.hpp"
+#include "threadHelper.inline.hpp"
 #include "utilities/align.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
@@ -121,6 +122,56 @@ TEST_VM(os, page_size_for_region_unaligned) {
     size_t actual = os::page_size_for_region_unaligned(small_page - 17, 1);
     ASSERT_EQ(small_page, actual);
   }
+}
+
+static void assert_test_pattern(oop& obj, const char* pattern) {
+  stringStream st;
+  os::print_location(&st, p2i(obj), true);
+  ASSERT_THAT(st.base(), testing::HasSubstr(pattern));
+}
+
+TEST_VM(os, test_print_location) {
+
+  JavaThread* THREAD = JavaThread::current();
+  ThreadInVMfromNative invm(THREAD);
+
+  oop obj = vmClasses::Byte_klass()->allocate_instance(THREAD);
+
+  outputStream* ostream = fdStream::stderr_stream();
+
+  {
+    MutexLocker lock(ClassLoaderDataGraph_lock);
+    os::print_location(ostream, p2i(obj), true);
+    assert_test_pattern(obj, "is_unlocked no_hash");
+  }
+
+  // this prints details
+  FlagSetting fs(WizardMode, true);
+
+  HandleMark hm(THREAD);
+  Handle h_obj(THREAD, obj);
+
+  // Thread tries to lock it.
+  {
+    MutexLocker lock(ClassLoaderDataGraph_lock);
+    ObjectLocker ol(h_obj, THREAD);
+    os::print_location(ostream, p2i(obj), true);
+    assert_test_pattern(obj, "locked");
+  }
+  {
+    MutexLocker lock(ClassLoaderDataGraph_lock);
+    os::print_location(ostream, p2i(obj), true);
+    assert_test_pattern(obj, "is_unlocked no_hash");
+  }
+  
+  // Hash the object then print it.
+  {
+    intx hash = h_obj->identity_hash();
+    MutexLocker lock(ClassLoaderDataGraph_lock);
+    assert_test_pattern(obj, "is an oop");
+    os::print_location(ostream, p2i(obj), true);
+  }
+
 }
 
 TEST(os, test_random) {
