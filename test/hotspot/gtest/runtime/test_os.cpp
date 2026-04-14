@@ -124,13 +124,19 @@ TEST_VM(os, page_size_for_region_unaligned) {
   }
 }
 
-// The test doesn't work for PRODUCT because it needs WizardMode
-#ifndef PRODUCT
-
-static void assert_test_pattern(oop& obj, const char* pattern) {
+static void assert_test_pattern(oop& obj, const char* pattern, bool is_present=true) {
   stringStream st;
   os::print_location(&st, p2i(obj), true);
-  ASSERT_THAT(st.base(), testing::HasSubstr(pattern));
+   outputStream* ostream = fdStream::stdout_stream();
+   ostream->print_cr("XXX pattern %s isp=%s uch %s wm %s output %s\nYYY\n", pattern, 
+    is_present?"true":"false", UseCompactObjectHeaders?"true":"false", WizardMode?"true":"false", st.base());
+  if (is_present) {
+    ASSERT_THAT(st.base(), testing::HasSubstr(pattern));
+    //ostream->print_cr("XXX1 result=%s\n", testing::HasSubstr(pattern)?"true":"false");
+  } else {
+    ASSERT_THAT(st.base(), testing::Not(testing::HasSubstr(pattern)));
+   // ostream->print_cr("XXX2 result=%s\n", testing::Not(testing::HasSubstr(pattern))?"true":"false");
+  }
 }
 
 TEST_VM(os, test_print_location) {
@@ -140,42 +146,49 @@ TEST_VM(os, test_print_location) {
 
   oop obj = vmClasses::Byte_klass()->allocate_instance(THREAD);
 
-  outputStream* ostream = fdStream::stderr_stream();
+  outputStream* ostream = fdStream::stdout_stream();
 
   {
+    ostream->print_cr("test 1");
+    // wizard mode off, so don't print markword
     MutexLocker lock(ClassLoaderDataGraph_lock);
-    os::print_location(ostream, p2i(obj), true);
-    assert_test_pattern(obj, "is_unlocked no_hash");
+    assert_test_pattern(obj, "is_unlocked no_hash", WizardMode);
   }
 
-  // this prints details
+  // WizardMode (not available in release mode) prints details
+#ifndef PRODUCT
   FlagSetting fs(WizardMode, true);
-
+  ostream->print_cr("ZZZ not product WizardMode %s UCH %s", WizardMode?"true":"false", UseCompactObjectHeaders?"true":"false");
+#else 
+  ostream->print_cr("TTTT product WizardMode %s UCH %s", WizardMode?"true":"false", UseCompactObjectHeaders?"true":"false");
+#endif
   HandleMark hm(THREAD);
   Handle h_obj(THREAD, obj);
 
   // Thread tries to lock it.
   {
+    ostream->print_cr("test 2");
     MutexLocker lock(ClassLoaderDataGraph_lock);
     ObjectLocker ol(h_obj, THREAD);
-    os::print_location(ostream, p2i(obj), true);
     assert_test_pattern(obj, "locked");
+    assert_test_pattern(obj, "is_unlocked", false);
   }
+
+  // Unlocked again
   {
+    ostream->print_cr("test 3");
     MutexLocker lock(ClassLoaderDataGraph_lock);
-    os::print_location(ostream, p2i(obj), true);
-    assert_test_pattern(obj, "is_unlocked no_hash");
+    assert_test_pattern(obj, "is_unlocked");
   }
   
   // Hash the object then print it.
   {
+    ostream->print_cr("test 4");
     intx hash = h_obj->identity_hash();
     MutexLocker lock(ClassLoaderDataGraph_lock);
-    assert_test_pattern(obj, "is an oop");
-    os::print_location(ostream, p2i(obj), true);
+    assert_test_pattern(obj, "is_unlocked hash=");
   }
 }
-#endif
 
 TEST(os, test_random) {
   const double m = 2147483647;
