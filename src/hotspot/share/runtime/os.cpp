@@ -1340,14 +1340,14 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
 
   // Compressed klass needs to be decoded first.
 #ifdef _LP64
-  if (!WizardMode && UseCompactObjectHeaders) {
-    markWord* mw = (markWord*)(uintptr_t)(addr);
-    if (mw->has_no_hash() && Klass::is_valid(mw->klass_without_asserts()) ) {
-      st->print(PTR_FORMAT " points to a valid markword: ", p2i(addr));
-      mw->print_on(st);
+  if (UseCompactObjectHeaders) {
+    markWord mw = (markWord)(uintptr_t)(addr);
+    if (mw.has_no_hash() && Klass::is_valid(mw.klass_without_asserts()) ) {
+      st->print(PTR_FORMAT " is a valid markword: ", p2i(addr));
+      mw.print_on(st);
       st->print(" ");
-      mw->klass()->Klass::print_on(st);
-      /* fall through to Klass::print_on() */
+      mw.klass()->Klass::print_on(st);
+      return;
     }
   }
 
