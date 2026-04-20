@@ -191,7 +191,7 @@ TEST_VM(os, test_print_location) {
     MutexLocker lock(ClassLoaderDataGraph_lock);
     assert_test_pattern(obj, "is_unlocked");
   }
-  
+
   // Hash the object then print it.
   {
     intx hash = h_obj->identity_hash();
