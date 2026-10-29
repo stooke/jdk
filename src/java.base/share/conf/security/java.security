@@ -1794,3 +1794,5 @@ com.sun.security.crl.maxSize = 20971520
 # from an environment variable or a file.
 #
 #jdk.security.password.allowSystemIn = true
+
+include java-fips.security[${java.home}/fipsmode,contains,1]

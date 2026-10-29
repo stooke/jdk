@@ -25,7 +25,9 @@
 
 package java.security;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -238,7 +240,116 @@ public final class Security {
             }
         }
 
-        static void loadInclude(String propFile) {
+        /**
+         * evaluateConditional
+         * @param conditionalExpr
+         * 
+         * Syntax:  
+         * conditionalExpr: condition | !condition
+         * condition:  constant,equals,constant
+         *             path,exists
+         *             boolConstant
+         *             path,contains,constant
+         * constant:   value | ${property}
+         * boolConstant: true | 1 | (anything else)
+         */
+        static boolean evaluateConditional(String conditional) {
+            // TODO should we only expand parts of the string?
+            String expConditional = PropertyExpander.expandNonStrict(conditional);
+            String[] parts = expConditional.split(",");
+            switch (parts.length) {
+                case 0:
+                    return true;
+                case 1:
+                    if (parts[0].toLowerCase().equals("true")) {
+                        return true;
+                    } else {
+                        try {
+                            int val = Integer.parseInt(parts[0]);
+                            return val > 0;
+                        } catch (NumberFormatException e) {
+                            return false;
+                        }
+                    }
+                case 2: {
+                    String p1 = parts[1].toLowerCase();
+                    if (p1.equals("exists") || p1.equals("!exists")) {
+                        boolean testExists = p1.equals("exists");
+                        return Files.exists(Path.of(parts[0])) ? testExists : !testExists;
+                    } else {
+                        // error
+                        if (sdebug != null) {
+                            sdebug.println("unrecognized condition '" + p1 + 
+                                    "' in conditional include");
+                        }
+                        return false;
+                    }
+                }
+                case 3: {
+                    String p1 = parts[1].toLowerCase();
+                    if (p1.equals("equals") || p1.equals("!equals")) {
+                        boolean testEquals = p1.equals("equals");
+                        return parts[0].equals(parts[2]) ? testEquals : !testEquals;
+                    } else if (p1.equals("contains") || p1.equals("!contains")) {
+                        boolean testContains = p1.equals("contains");
+                        try (BufferedReader br = new BufferedReader(new FileReader(parts[0]))) {
+                            String line;
+                            if ((line = br.readLine()) != null) {
+                                return parts[2].equals(line) ? testContains : !testContains;
+                            }
+                        } catch (IOException e) {
+                            // error
+                            if (sdebug != null) {
+                                sdebug.println("unrecognized condition '" + p1 + 
+                                        "' in conditional include");
+                            }
+                        }
+                    } else {
+                        // error
+                        if (sdebug != null) {
+                            sdebug.println("unrecognized condition '" + p1 + 
+                                    "' in conditional include: '" + conditional + "'");
+                        }
+                    }
+                    break;
+                }
+                default:
+                    // error
+                    if (sdebug != null) {
+                        sdebug.println("unparseable condition expression '" + conditional + 
+                                "' in conditional include");
+                    }
+            }
+            return false;
+        }
+
+        /**
+         * loadInclude
+         * @param propFileAndConditionals
+         * 
+         * Syntax:  path
+         *          path[conditions]
+         * 
+         * conditions: condition | !condition
+         * condition:  constant,equals,constant
+         *             path,exists
+         *             path,contains,constant
+         * constant:   value | ${property}
+         */
+        static void loadInclude(String propFileAndConditionals) {
+            String propFile = propFileAndConditionals;
+            int idx = propFileAndConditionals.indexOf('[');
+            if (idx != -1 && propFileAndConditionals.endsWith("]")) {
+                String conditional = propFileAndConditionals.substring(idx + 1, propFileAndConditionals.length() - 1);
+                propFile = propFileAndConditionals.substring(0, idx);
+                if (!evaluateConditional(conditional)) {
+                    if (sdebug != null) {
+                        sdebug.println("conditional include of: '" + propFile + 
+                                "' condition evaluates false: " + conditional);
+                    }
+                    return;
+                }
+            }
             String expPropFile = PropertyExpander.expandNonStrict(propFile);
             if (sdebug != null) {
                 sdebug.println("processing include: '" + propFile + "'" +
