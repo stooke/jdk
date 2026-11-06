@@ -26,7 +26,14 @@
 package sun.security.jca;
 
 import java.util.*;
-
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URLClassLoader;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.security.Security;
@@ -159,6 +166,102 @@ public final class ProviderList {
         this.allLoaded = allLoaded;
     }
 
+
+        /**
+         * evaluateConditional
+         * @param conditionalExpr
+         * 
+         * Syntax:  
+         * conditionalExpr: condition | !condition
+         * condition:  constant,equals,constant
+         *             path,exists
+         *             boolConstant
+         *             path,contains,constant
+         * constant:   value | ${property}
+         * boolConstant: true | 1 | (anything else)
+         */
+        static boolean evaluateConditional(String conditional) {
+            // TODO should we only expand parts of the string?
+            //String expConditional = PropertyExpander.expandNonStrict(conditional);
+            String expConditional = conditional;
+            String[] parts = expConditional.split(",");
+            switch (parts.length) {
+                case 0:
+                    return true;
+                case 1:
+                    if (parts[0].toLowerCase().equals("true")) {
+                        return true;
+                    } else {
+                        try {
+                            int val = Integer.parseInt(parts[0]);
+                            return val > 0;
+                        } catch (NumberFormatException e) {
+                            return false;
+                        }
+                    }
+                case 2: {
+                    String p1 = parts[1].toLowerCase();
+                    if (parts[0].equals("jar")) {
+                        try {
+                            URLClassLoader child = new URLClassLoader(
+                                new URL[] {new URI(p1).toURL()}, ClassLoader.getSystemClassLoader());
+                        } catch (Exception e) {
+                           if (debug != null) {
+                             debug.println("malformed filename '" + p1 + "'");
+                             return false;
+                           }
+                        }
+                        return true;
+                    } else if (p1.equals("exists") || p1.equals("!exists")) {
+                        boolean testExists = p1.equals("exists");
+                        return Files.exists(Path.of(parts[0])) ? testExists : !testExists;
+                    } else {
+                        // error
+                        if (debug != null) {
+                            debug.println("unrecognized condition '" + p1 + 
+                                    "' in conditional include");
+                        }
+                        return false;
+                    }
+                }
+                case 3: {
+                    String p1 = parts[1].toLowerCase();
+                    if (p1.equals("equals") || p1.equals("!equals")) {
+                        boolean testEquals = p1.equals("equals");
+                        return parts[0].equals(parts[2]) ? testEquals : !testEquals;
+                    } else if (p1.equals("contains") || p1.equals("!contains")) {
+                        boolean testContains = p1.equals("contains");
+                        try (BufferedReader br = new BufferedReader(new FileReader(parts[0]))) {
+                            String line;
+                            if ((line = br.readLine()) != null) {
+                                return parts[2].equals(line) ? testContains : !testContains;
+                            }
+                        } catch (IOException e) {
+                            // error
+                            if (debug != null) {
+                                debug.println("unrecognized condition '" + p1 + 
+                                        "' in conditional include");
+                            }
+                        }
+                    } else {
+                        // error
+                        if (debug != null) {
+                            debug.println("unrecognized condition '" + p1 + 
+                                    "' in conditional include: '" + conditional + "'");
+                        }
+                    }
+                    break;
+                }
+                default:
+                    // error
+                    if (debug != null) {
+                        debug.println("unparseable condition expression '" + conditional + 
+                                "' in conditional include");
+                    }
+            }
+            return false;
+        }
+   
     /**
      * Return a new ProviderList parsed from the java.security Properties.
      */
@@ -176,12 +279,28 @@ public final class ProviderList {
                 }
                 break;
             }
+
             int k = entry.indexOf(' ');
+            String provName = k == -1 ? entry : entry.substring(0, k);
+
+            int idx = provName.indexOf('[');
+            if (idx != -1 && provName.endsWith("]")) {
+                String conditional = provName.substring(idx + 1, provName.length() - 1);
+                provName = provName.substring(0, idx);
+                if (!evaluateConditional(conditional)) {
+                    if (debug != null) {
+                        debug.println("conditional provider: '" + entry + 
+                                "' condition evaluates false: " + conditional);
+                    }
+                    i++;
+                    continue;
+                }
+            }
+
             ProviderConfig config;
             if (k == -1) {
-                config = new ProviderConfig(entry);
+                config = new ProviderConfig(provName);
             } else {
-                String provName = entry.substring(0, k);
                 String argument = entry.substring(k + 1).trim();
                 config = new ProviderConfig(provName, argument);
             }
